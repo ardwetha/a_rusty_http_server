@@ -1,12 +1,11 @@
 extern crate core;
 
-mod response;
 mod parser;
+mod response;
 
 use std::io::{self, Write};
 use std::io::{BufRead, BufReader};
 use std::net::{Shutdown, TcpListener, TcpStream};
-use std::str::FromStr;
 
 fn handle_connection(mut stream: TcpStream) -> io::Result<()> {
     println!("New Connection");
