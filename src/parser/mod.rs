@@ -44,17 +44,33 @@ fn handle_get(request: Vec<String>) -> Response {
     //ToDo: Search for host header and lookup corresponding data
     let mut requested_resource = split[1].to_owned();
 
+    let mut full_path = String::new();
     if requested_resource.contains("..") {
         response.status_code = String::from_str("400 Bad Request").unwrap();
     } else {
+        for str in request.iter().to_owned() {
+            if str.contains("Host: ") {
+                let splitted: Vec<String> = str.split(" ").map(|s| s.to_string()).collect();
+                let mut host = splitted[1].to_owned();
+
+                //Necessary to prevent directory traversal attacks via a maliciously crafted host name
+                if host.contains("/") {
+                    host = String::from_str("").unwrap();
+                }
+                full_path.push_str(&host[0..]);
+                full_path.push_str("/");
+                break;
+            }
+        }
         if "/" == requested_resource.as_str() {
-            //ToDo: Implement a host file header thing
             requested_resource = String::from_str("index.html").unwrap();
         } else {
             requested_resource = requested_resource[1..].parse().unwrap();
             println!("{}", requested_resource);
         }
-        if let Ok(data) = fs::read(&requested_resource) {
+        full_path.push_str(&requested_resource[0..]);
+        println!("FullPath: {}", full_path);
+        if let Ok(data) = fs::read(&full_path) {
             response.content_type = get_content_type(requested_resource.to_owned());
             response.body = data;
         } else {
