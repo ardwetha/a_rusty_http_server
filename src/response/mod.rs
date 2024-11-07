@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-mod enum_options;
+pub mod enum_options;
 
 pub struct Response {
     pub status_code: String,
@@ -36,6 +36,9 @@ impl Response {
             }
             enum_options::ConnectionOptions::KeepAlive => {
                 response.push_str("keep-alive\r\n");
+
+                //ToDo: Make configurable
+                response.push_str("Keep-Alive: timeout=2, max=100\r\n");
             }
         }
         response.push_str("\r\n");
