@@ -38,7 +38,7 @@ impl Response {
                 response.push_str("keep-alive\r\n");
 
                 //ToDo: Make configurable
-                response.push_str("Keep-Alive: timeout=5\r\n");
+                response.push_str("Keep-Alive: timeout=2, max=100\r\n");
             }
         }
         response.push_str("\r\n");
