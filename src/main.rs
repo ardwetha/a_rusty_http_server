@@ -1,15 +1,27 @@
 extern crate core;
 
+mod config;
 mod parser;
 mod response;
 
-use std::io;
+use std::io::{self, Error};
 use std::io::{BufRead, BufReader, Write};
 use std::net::{Shutdown, TcpListener, TcpStream};
 use std::thread;
 use std::time::Duration;
 
+use config::Config;
+
 fn handle_connection(mut stream: TcpStream) -> io::Result<()> {
+    let config_opt = Config::new();
+    if config_opt.is_none() {
+        println!("Config error");
+        return Err(Error::new(
+            io::ErrorKind::InvalidInput,
+            "Invalid config File",
+        ));
+    }
+    let config = config_opt.unwrap();
     loop {
         println!("New Connection");
         let mut buf_reader = BufReader::new(&stream);
@@ -44,7 +56,7 @@ fn handle_connection(mut stream: TcpStream) -> io::Result<()> {
         for line in http_request.to_owned() {
             println!("{} END", line);
         }
-        let (header, body, keep_alive) = parser::generate_response(http_request);
+        let (header, body, keep_alive) = parser::generate_response(http_request, &config);
         stream.write_all(header.as_bytes())?;
         stream.write_all(body.as_slice())?;
         stream.flush()?;

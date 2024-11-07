@@ -1,0 +1,3 @@
+file_root: /home/zacuue/repos/a_rusty_http_server/ -> The path to where your websites are
+default_host: localhost -> The default hostname, if no host header is provided
+keep_alive: true -> true always use when requested, false -> always closes the connection

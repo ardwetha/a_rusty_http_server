@@ -1,3 +1,4 @@
+use crate::config::Config;
 use crate::response::{self, Response};
 use std::collections::HashMap;
 use std::fs;
@@ -19,14 +20,14 @@ static EXTENSIONS: LazyLock<HashMap<&str, &str>, fn() -> HashMap<&'static str, &
         ])
     });
 
-pub fn generate_response(request: Vec<String>) -> (String, Vec<u8>, bool) {
+pub fn generate_response(request: Vec<String>, conf: &Config) -> (String, Vec<u8>, bool) {
     let mut response = Response::new();
     let head_line = &request[0];
 
     let split: Vec<String> = head_line.split(&" ").map(|s| s.to_string()).collect();
     match split[0].as_str() {
         "GET" => {
-            (response) = handle_get(request);
+            (response) = handle_get(request, &conf);
         }
         _ => {
             response.status_code = String::from_str("418 I'm a teapot").unwrap();
@@ -39,7 +40,7 @@ pub fn generate_response(request: Vec<String>) -> (String, Vec<u8>, bool) {
     (response.convert_to_string(), response.body, keep_alive)
 }
 
-fn handle_get(request: Vec<String>) -> Response {
+fn handle_get(request: Vec<String>, conf: &Config) -> Response {
     let mut response = Response::new();
     let line = &request[0];
     let split: Vec<String> = line.split(&" ").map(|s| s.to_string()).collect();
@@ -47,30 +48,38 @@ fn handle_get(request: Vec<String>) -> Response {
     //ToDo: Search for host header and lookup corresponding data
     let mut requested_resource = split[1].to_owned();
 
-    let mut full_path = String::new();
+    let mut full_path = conf.file_root.to_owned();
+    //Why not working -> ToDo: Fix
     if requested_resource.contains("..") {
         response.status_code = String::from_str("400 Bad Request").unwrap();
+        return response;
     } else {
+        let mut host = String::new();
         for str in request.iter().to_owned() {
             if str.contains("Host: ") {
                 let splitted: Vec<String> = str.split(" ").map(|s| s.to_string()).collect();
-                let mut host = splitted[1].to_owned();
+                host = splitted[1].to_owned();
 
                 //Necessary to prevent directory traversal attacks via a maliciously crafted host name
                 if host.contains("/") {
                     host = String::from_str("").unwrap();
                 }
-                full_path.push_str(&host[0..]);
-                full_path.push_str("/");
             }
             if str.contains("Connection:") {
                 let splitted: Vec<String> = str.split(" ").map(|s| s.to_string()).collect();
                 let param = splitted[1].to_owned();
-                if param.trim() == "keep-alive" || param.trim() == "Keep-Alive" {
+                if (param.trim() == "keep-alive" || param.trim() == "Keep-Alive")
+                    && conf.keep_alive == true
+                {
                     response.connection = response::enum_options::ConnectionOptions::KeepAlive;
                 }
             }
         }
+        if host.is_empty() {
+            host = conf.default_host.to_owned();
+        }
+        full_path.push_str(&host[0..]);
+        full_path.push_str("/");
         if "/" == requested_resource.as_str() {
             requested_resource = String::from_str("index.html").unwrap();
         } else {

@@ -9,7 +9,7 @@
 - Support for a basic website with certain file types
 - Only supports GET right now
 - Host Header gets resolve
-  - They are part of the Path. The server looks for a directory corresponding to the Host requested in it's  working directory, be careful to include the port when using non default ports
+  - They are part of the Path. The server looks for a directory corresponding to the Host requested in it's  working directory, be careful to include the port when using non default ports, see the localhost:8080 example
 
 ## ToDo
 - Configuration for root directories of different hosts (make multiple Websites possible)
